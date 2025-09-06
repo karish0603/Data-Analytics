@@ -1,1 +1,83 @@
+-- Step 1: Create Database
+CREATE DATABASE IF NOT EXISTS taco_db;
+USE taco_db;
 
+-- Step 2: Drop Table if already exists
+DROP TABLE IF EXISTS taco_sales;
+
+-- Step 3: Create Table (load dates as text first)
+CREATE TABLE taco_sales (
+    Order_ID INT,
+    Restaurant_Name VARCHAR(100),
+    Location VARCHAR(100),
+    Order_Time VARCHAR(100),
+    Delivery_Time VARCHAR(100),
+    Delivery_Duration_min INT,
+    Taco_Size VARCHAR(20),
+    Taco_Type VARCHAR(50),
+    Toppings_Count INT,
+    Distance_km DECIMAL(6,2),
+    Price DECIMAL(6,2),
+    Tip DECIMAL(6,2),
+    Weekend_Order VARCHAR(10)
+);
+
+--- Enable local_infile temporarily
+SET GLOBAL local_infile = 1;
+SHOW VARIABLES LIKE 'local_infile';
+
+-- Step 4: Load Data (adjust path for your system)
+-- Load data from the CSV file. Replace '/path/to/your/taco_sales_data.csv' with the actual path.
+-- On some systems, you may need to use a different command like `LOAD DATA LOCAL INFILE`
+-- and enable local infile loading.
+LOAD DATA LOCAL INFILE 'C:/Users/karis/Downloads/taco_sales.csv'
+INTO TABLE taco_sales
+FIELDS TERMINATED BY ','
+OPTIONALLY ENCLOSED BY '"'
+LINES TERMINATED BY '\r\n'
+IGNORE 1 ROWS;
+
+-- Step 5: Add clean DATETIME columns
+ALTER TABLE taco_sales
+    ADD COLUMN Order_Time_fmt DATETIME,
+    ADD COLUMN Delivery_Time_fmt DATETIME;
+
+--- Step 6: Convert both - and / formats into DATETIME in one shot
+UPDATE taco_sales
+SET Order_Time_fmt = STR_TO_DATE(REPLACE(Order_Time, '-', '/'), '%d/%m/%Y %H:%i'),
+    Delivery_Time_fmt = STR_TO_DATE(REPLACE(Delivery_Time, '-', '/'), '%d/%m/%Y %H:%i');
+    
+-- Step 7: Key Analysis Queries 
+-- Total Revenue
+SELECT SUM(Price) AS Total_Revenue FROM taco_sales;
+
+-- Average Order Value
+SELECT (SUM(Price) / COUNT(DISTINCT Order_ID)) AS Avg_Order_Value FROM taco_sales;
+
+-- Total Orders
+SELECT COUNT(DISTINCT Order_ID) AS Total_Orders FROM taco_sales;
+
+-- Most Popular Taco Type
+SELECT Taco_Type, COUNT(*) AS Orders
+FROM taco_sales
+GROUP BY Taco_Type
+ORDER BY Orders DESC;
+
+-- Top 5 Restaurants by Revenue
+SELECT Restaurant_Name, SUM(Price) AS Revenue
+FROM taco_sales
+GROUP BY Restaurant_Name
+ORDER BY Revenue DESC
+LIMIT 5;
+
+SELECT Weekend_Order, SUM(Price) AS Revenue
+FROM taco_sales
+GROUP BY Weekend_Order;
+
+-- Sales Trend by Day of Week 
+SELECT DAYNAME(Order_Time_fmt) AS Day_of_Week,
+       COUNT(*) AS Orders,
+       SUM(Price) AS Revenue
+FROM taco_sales
+GROUP BY Day_of_Week
+ORDER BY FIELD(Day_of_Week,'Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday')
