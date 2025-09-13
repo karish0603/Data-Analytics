@@ -35,6 +35,6 @@ Task 4: The Auto-Pilot System (AI-Powered Strategy)
 4.	THE MOST IMPORTANT PART: The Learning Loop: It checks if the SMS worked. Did the customer pay? It uses this result to get smarter over time, learning what works best for different types of people.
 
  
-
+“This internship was theory-based, focused on predicting and reducing credit card delinquency. I explored the dataset to spot risk factors like high credit utilization and missed payments, then designed a logistic regression framework to show how risk could be predicted. I also suggested a business action plan, like SMS reminders, and outlined an AI-powered system concept to automate and improve collections. The goal was to learn the full process from data to business impact.”
 
 
